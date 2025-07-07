@@ -1,0 +1,149 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homework-deployment
+  namespace: homework
+  labels:
+    app: nginx-homework
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-homework-pod
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: nginx-homework-pod
+    spec:
+      serviceAccountName: monitoring
+      nodeSelector:
+        homework: "true"
+
+      initContainers:
+        - name: init-download
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - "wget -O /mnt/data/index.html http://example.com && chmod +r /mnt/data/index.html"
+          volumeMounts:
+            - name: persistent-storage
+              mountPath: /mnt/data
+
+        - name: init-metrics
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "Fetching metrics from Kubernetes API..."
+              
+              TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+              CA_CERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+              
+              echo "Testing different metrics endpoints..."
+              
+              SUCCESS=false
+              
+              if wget --header="Authorization: Bearer $TOKEN" \
+                      --ca-certificate="$CA_CERT" \
+                      -O /tmp/metrics_test.html \
+                      https://kubernetes.default.svc.cluster.local/metrics 2>/dev/null; then
+                cp /tmp/metrics_test.html /mnt/data/metrics.html
+                SUCCESS=true
+                echo "Success: /metrics endpoint"
+              fi
+              
+              if [ "$SUCCESS" = false ]; then
+                if wget --header="Authorization: Bearer $TOKEN" \
+                        --no-check-certificate \
+                        -O /tmp/metrics_test.html \
+                        https://kubernetes.default.svc.cluster.local/metrics 2>/dev/null; then
+                  cp /tmp/metrics_test.html /mnt/data/metrics.html
+                  SUCCESS=true
+                  echo "Success: /metrics endpoint (no SSL verify)"
+                fi
+              fi
+              
+              if [ "$SUCCESS" = false ]; then
+                cat > /mnt/data/metrics.html << 'EOF'
+              <!DOCTYPE html>
+              <html>
+              <head><title>Kubernetes Metrics</title></head>
+              <body>
+                <h1>Kubernetes Metrics Diagnostic</h1>
+                <h2>ServiceAccount Info:</h2>
+                <p><strong>Namespace:</strong> homework</p>
+                <p><strong>ServiceAccount:</strong> monitoring</p>
+                
+                <h2>Attempted Endpoints:</h2>
+                <ul>
+                  <li>https://kubernetes.default.svc.cluster.local/metrics</li>
+                  <li>Token authentication: ✅ Available</li>
+                  <li>CA Certificate: ✅ Available</li>
+                </ul>
+                
+                <h2>Possible Issues:</h2>
+                <ul>
+                  <li>ClusterRole permissions for /metrics endpoint</li>
+                  <li>API server metrics not exposed on /metrics</li>
+                  <li>Network connectivity to API server</li>
+                </ul>
+                
+                <h2>Token Info:</h2>
+                <p>Token length: $(wc -c < /var/run/secrets/kubernetes.io/serviceaccount/token) characters</p>
+                
+                <p><em>Generated: $(date)</em></p>
+              </body>
+              </html>
+              EOF
+                echo "Created diagnostic page"
+              fi
+              
+              chmod +r /mnt/data/metrics.html
+              echo "Metrics processing completed"
+          volumeMounts:
+            - name: persistent-storage
+              mountPath: /mnt/data
+
+      containers:
+        - name: web
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: persistent-storage
+              mountPath: /usr/share/nginx/html
+            - name: config-volume
+              mountPath: /homework/conf
+              readOnly: true
+          lifecycle:
+            preStop:
+              exec:
+                command: ["echo", "PreStop hook: Not removing index.html from PVC"]
+          readinessProbe:
+            httpGet:
+              path: /index.html
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 3
+
+      volumes:
+        - name: persistent-storage
+          persistentVolumeClaim:
+            claimName: kuber-pvc
+
+        - name: config-volume
+          configMap:
+            name: kuber-cm
+            items:
+              - key: "dbuser"
+                path: "file"
