@@ -14,3 +14,7 @@ Thumbs.db
 # Dependencies
 node_modules/
 __pycache__/
+
+token
+cd-kubeconfig.yaml
+homework-cd-config.yaml
