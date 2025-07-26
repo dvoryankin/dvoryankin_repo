@@ -1,0 +1,7 @@
+Your homework application has been deployed.
+
+1. Get the application URL by running these commands:
+{{- if .Values.ingress.enabled }}
+  {{- $firstHost := index .Values.ingress.hosts 0 -}}
+  http://{{ $firstHost.host }}/
+{{- end }}

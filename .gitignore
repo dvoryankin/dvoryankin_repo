@@ -18,3 +18,7 @@ __pycache__/
 token
 cd-kubeconfig.yaml
 homework-cd-config.yaml
+
+# Helm / Helmfile
+charts/*.tgz
+.helmfile-work/

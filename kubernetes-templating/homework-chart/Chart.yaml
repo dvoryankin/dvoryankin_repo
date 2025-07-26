@@ -1,0 +1,13 @@
+apiVersion: v2
+name: homework-chart
+description: A Helm chart for our homework application
+type: application
+version: 0.1.0
+appVersion: "1.16.0"
+
+# --- Добавляем зависимость от Redis ---
+dependencies:
+  - name: redis
+    version: "18.19.1"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled

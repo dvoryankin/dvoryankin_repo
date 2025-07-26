@@ -1,0 +1,30 @@
+repositories:
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
+
+releases:
+  # Kafka PROD
+  - name: kafka-prod
+    namespace: prod
+    chart: bitnami/kafka
+    version: "26.3.2"
+    createNamespace: true
+    values:
+      - replicaCount: 5
+      - image:
+          tag: "3.5.2"
+      - auth:
+          interBrokerProtocol: sasl_plaintext
+          clientProtocol: sasl_plaintext
+
+  # 2 Kafka DEV
+  - name: kafka-dev
+    namespace: dev
+    chart: bitnami/kafka
+    version: "26.3.2"
+    createNamespace: true
+    values:
+      - replicaCount: 1
+      - auth:
+          clientProtocol: plaintext
+          interBrokerProtocol: plaintext
