@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mysql-operator
+  namespace: mysql-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: mysql-operator-minimal-role
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "endpoints", "persistentvolumeclaims", "events", "configmaps", "secrets"]
+    verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+
+  - apiGroups: ["otus.homework"]
+    resources: ["mysqls"]
+    verbs: ["get", "list", "watch"]
+
+  - apiGroups: ["otus.homework"]
+    resources: ["mysqls/status"]
+    verbs: ["get", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: mysql-operator-minimal-binding
+subjects:
+  - kind: ServiceAccount
+    name: mysql-operator
+    namespace: mysql-operator-system
+roleRef:
+  kind: ClusterRole
+  name: mysql-operator-minimal-role
+  apiGroup: rbac.authorization.k8s.io
