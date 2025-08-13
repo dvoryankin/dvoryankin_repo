@@ -3,14 +3,10 @@ kind: Service
 metadata:
   name: homework-service
   namespace: homework
-  labels:
-    app: nginx-homework
 spec:
-  type: ClusterIP
   selector:
-    app: nginx-homework-pod
+    app: homework
   ports:
-    - name: http
-      protocol: TCP
-      port: 80
+    - port: 80
       targetPort: 80
+      protocol: TCP

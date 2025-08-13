@@ -1,107 +1,30 @@
-
-# Default values for homework-chart.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
-replicaCount: 3
+replicaCount: 2
 
 image:
   repository: nginx
-  pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
-  tag: "latest"
-
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+  tag: "1.25.4-alpine"
 
 serviceAccount:
-  # Specifies whether a service account should be created
   create: true
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: "monitoring"
-
-podAnnotations: {}
-podSecurityContext: {}
-securityContext: {}
+  name: monitoring
 
 service:
   type: ClusterIP
   port: 80
 
 ingress:
-  enabled: true
-  className: "nginx"
-  annotations:
-  # nginx.ingress.kubernetes.io/rewrite-target: /
-  hosts:
-    - host: chart-homework.local
-      paths:
-        - path: /
-          pathType: Prefix
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+  enabled: false      # включишь при желании
 
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-#   memory: 128Mi
-
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
 
 nodeSelector:
-  homework: "true" # Наш nodeSelector
+  node-role: "workload"
 
 tolerations: []
 affinity: {}
-
-persistence:
-  enabled: true
-  pvcName: "kuber-pvc"
-
-configMap:
-  enabled: true
-  name: "kuber-cm"
-  mountPath: "/homework/conf"
-  mountFile: "file"
-  mountKey: "dbuser"
-
-initContainers:
-  download:
-    enabled: true
-    image: "busybox:1.36"
-    mountPath: "/data"
-  getMetrics:
-    enabled: false
-    image: "curlimages/curl:latest"
-    mountPath: "/data"
-
-probes:
-  readiness:
-    enabled: true
-  liveness:
-    enabled: false
-
-redis:
-  enabled: true
-    # auth:
-    #   enabled: false
-
-    
