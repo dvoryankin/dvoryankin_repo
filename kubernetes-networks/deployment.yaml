@@ -4,63 +4,54 @@ metadata:
   name: homework-deployment
   namespace: homework
   labels:
-    app: nginx-homework
+    app: homework
 spec:
   replicas: 3
-
   selector:
     matchLabels:
-      app: nginx-homework-pod
-
+      app: homework
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 1
       maxSurge: 1
-
   template:
     metadata:
       labels:
-        app: nginx-homework-pod
+        app: homework
     spec:
       nodeSelector:
-        homework: "true"
+        node-role: "workload"
 
       initContainers:
-        - name: init-download
+        - name: init-index
           image: busybox:1.36
-          command:
-            - sh
-            - -c
-            - "wget -O /init-data/index.html http://example.com && chmod +r /init-data/index.html"
+          command: ["sh","-c","echo 'Hello from GitOps!' > /init-data/index.html"]
           volumeMounts:
             - name: shared-html-data
               mountPath: /init-data
 
       containers:
         - name: web
-          #image: nginx:1.25.4-alpine
-          image: nginx:latest
+          image: nginx:1.25.4-alpine
           ports:
             - containerPort: 80
           volumeMounts:
             - name: shared-html-data
               mountPath: /usr/share/nginx/html
-          lifecycle:
-            preStop:
-              exec:
-                command: ["rm", "-f", "/usr/share/nginx/html/index.html"]
-
           readinessProbe:
             httpGet:
               path: /index.html
               port: 80
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            timeoutSeconds: 1
-            successThreshold: 1
-            failureThreshold: 3
-
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
       volumes:
         - name: shared-html-data
           emptyDir: {}
