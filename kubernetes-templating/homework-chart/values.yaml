@@ -8,6 +8,23 @@ serviceAccount:
   create: true
   name: monitoring
 
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false      # включишь при желании
+
 resources:
-  requests: { cpu: 50m, memory: 64Mi }
-  limits:   { cpu: 250m, memory: 256Mi }
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+nodeSelector:
+  node-role: "workload"
+
+tolerations: []
+affinity: {}

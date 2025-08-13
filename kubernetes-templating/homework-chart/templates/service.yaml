@@ -6,9 +6,9 @@ metadata:
   labels:
     {{- include "homework-chart.labels" . | nindent 4 }}
 spec:
-  type: {{ .Values.service.type }}
+  type: {{ .Values.service.type | default "ClusterIP" }}
   ports:
-    - port: {{ .Values.service.port }}
+    - port: {{ .Values.service.port | default 80 }}
       targetPort: http
       protocol: TCP
       name: http

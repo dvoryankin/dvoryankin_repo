@@ -30,7 +30,7 @@ spec:
 
       containers:
         - name: {{ include "homework-chart.name" . }}
-          image: "{{ .Values.image.repository | default "nginx" }}:{{ .Values.image.tag | default "1.25.4-alpine" }}"
+          image: {{ .Values.image.repository | default "nginx" }}:{{ .Values.image.tag | default "1.25.4-alpine" }}
           ports:
             - name: http
               containerPort: 80
