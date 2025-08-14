@@ -1,0 +1,50 @@
+global:
+  nodeSelector:
+    node-role: "infra"
+  tolerations:
+    - key: "node-role"
+      operator: "Equal"
+      value: "infra"
+      effect: "NoSchedule"
+
+controller:
+  nodeSelector:
+    node-role: "infra"
+  tolerations:
+    - key: "node-role"
+      operator: "Equal"
+      value: "infra"
+      effect: "NoSchedule"
+
+server:
+  nodeSelector:
+    node-role: "infra"
+  tolerations:
+    - key: "node-role"
+      operator: "Equal"
+      value: "infra"
+      effect: "NoSchedule"
+  service:
+    type: ClusterIP
+    servicePortHttp: 80
+  configs:
+    params:
+      server.insecure: "true"   # портфорвард на 80 и http
+
+repoServer:
+  nodeSelector:
+    node-role: "infra"
+  tolerations:
+    - key: "node-role"
+      operator: "Equal"
+      value: "infra"
+      effect: "NoSchedule"
+
+applicationSet:
+  nodeSelector:
+    node-role: "infra"
+  tolerations:
+    - key: "node-role"
+      operator: "Equal"
+      value: "infra"
+      effect: "NoSchedule"
