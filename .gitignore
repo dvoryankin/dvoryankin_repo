@@ -22,3 +22,6 @@ homework-cd-config.yaml
 # Helm / Helmfile
 charts/*.tgz
 .helmfile-work/
+
+vault-init.json
+*.token
