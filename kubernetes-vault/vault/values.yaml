@@ -1,0 +1,28 @@
+server:
+  ha:
+    enabled: true
+  dataStorage:
+    enabled: false
+
+  extraConfig: |
+    listener "tcp" {
+      address         = "0.0.0.0:8200"
+      cluster_address = "0.0.0.0:8201"
+      tls_disable     = 1
+    }
+    storage "consul" {
+      address = "consul-server.consul.svc:8500"
+      path    = "vault/"
+    }
+    ui = true
+
+  nodeSelector:
+    node-role: "infra"
+  tolerations:
+    - key: "node-role"
+      operator: "Equal"
+      value: "infra"
+      effect: "NoSchedule"
+
+ui:
+  enabled: true
