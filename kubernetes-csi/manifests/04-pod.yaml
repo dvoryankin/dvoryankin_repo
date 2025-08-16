@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: csi-s3-demo
+  namespace: csi-demo
+spec:
+  tolerations:
+    - key: "node-role"
+      operator: "Equal"
+      value: "infra"
+      effect: "NoSchedule"
+  containers:
+  - name: app
+    image: nginx:1.25
+    ports:
+      - containerPort: 80
+    volumeMounts:
+      - name: data
+        mountPath: /usr/share/nginx/html
+  initContainers:
+  - name: init
+    image: busybox:1.36
+    command: ["sh","-lc","echo 'Hello from S3 CSI!' > /mnt/index.html"]
+    volumeMounts:
+      - name: data
+        mountPath: /mnt
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: s3-pvc

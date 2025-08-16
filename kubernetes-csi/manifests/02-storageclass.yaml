@@ -1,0 +1,17 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: yc-s3
+provisioner: ru.yandex.s3.csi
+parameters:
+  bucket: ${BUCKET}
+  mounter: geesefs
+  options: "--dir-mode=0777 --file-mode=0666"
+  # секреты для provisioner и для node-stage:
+  csi.storage.k8s.io/provisioner-secret-name: csi-s3-secret
+  csi.storage.k8s.io/provisioner-secret-namespace: kube-system
+  csi.storage.k8s.io/node-stage-secret-name: csi-s3-secret
+  csi.storage.k8s.io/node-stage-secret-namespace: kube-system
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+allowVolumeExpansion: false
