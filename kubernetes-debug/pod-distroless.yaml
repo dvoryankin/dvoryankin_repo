@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-distroless
+  namespace: debug
+  labels:
+    app: nginx-distroless
+spec:
+  shareProcessNamespace: true
+  containers:
+    - name: nginx
+      image: kyos0109/nginx-distroless:latest
+      imagePullPolicy: IfNotPresent
+      ports:
+        - containerPort: 80
