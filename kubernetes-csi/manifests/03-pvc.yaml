@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: s3-pvc
+  namespace: csi-demo
+spec:
+  accessModes: [ ReadWriteMany ]
+  storageClassName: yc-s3
+  resources:
+    requests:
+      storage: 1Gi
