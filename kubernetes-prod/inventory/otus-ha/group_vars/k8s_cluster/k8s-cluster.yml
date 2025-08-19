@@ -1,0 +1,5 @@
+kube_version: v1.30.6
+kube_network_plugin: calico
+
+# kube_vip_enabled: true
+# kube_vip_address: 10.10.0.254

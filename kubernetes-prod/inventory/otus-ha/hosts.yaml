@@ -1,0 +1,59 @@
+all:
+  hosts:
+    cp1:
+      ansible_host: 46.21.246.50    # cp1 EXTERNAL
+      ip:           10.10.0.23      # cp1 INTERNAL
+      access_ip:    10.10.0.23
+    cp2:
+      ansible_host: 46.21.247.103   # cp2 EXTERNAL
+      ip:           10.10.0.34      # cp2 INTERNAL
+      access_ip:    10.10.0.34
+    cp3:
+      ansible_host: 89.169.138.198  # cp3 EXTERNAL
+      ip:           10.10.0.12      # cp3 INTERNAL
+      access_ip:    10.10.0.12
+    wk1:
+      ansible_host: 89.169.135.181  # wk1 EXTERNAL
+      ip:           10.10.0.4       # wk1 INTERNAL
+      access_ip:    10.10.0.4
+    wk2:
+      ansible_host: 89.169.136.82   # wk2 EXTERNAL
+      ip:           10.10.0.25      # wk2 INTERNAL
+      access_ip:    10.10.0.25
+
+  vars:
+    ansible_user: ubuntu
+    ansible_ssh_private_key_file: /home/st/.ssh/yc_k8s_key
+
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_timeout: 30
+    ansible_ssh_common_args: >-
+      -o StrictHostKeyChecking=no
+      -o UserKnownHostsFile=/dev/null
+      -o ServerAliveInterval=30
+      -o ServerAliveCountMax=5
+      -o ConnectTimeout=5
+      -o ControlMaster=auto
+      -o ControlPersist=30m
+
+  children:
+    kube_control_plane:
+      hosts:
+        cp1:
+        cp2:
+        cp3:
+    kube_node:
+      hosts:
+        wk1:
+        wk2:
+    etcd:
+      hosts:
+        cp1:
+        cp2:
+        cp3:
+    k8s_cluster:
+      children:
+        kube_control_plane:
+        kube_node:
+    calico_rr:
+      hosts: {}

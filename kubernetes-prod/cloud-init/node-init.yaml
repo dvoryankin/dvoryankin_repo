@@ -1,0 +1,56 @@
+#cloud-config
+users:
+  - default
+  - name: ubuntu
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    groups: sudo
+    ssh-authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCr9hRKY6k53TXvyNfAAFzmbMhVaWf6xlGlfbZjBKtfPY8jto63DL5Y+26gFeXE6cy0RDeZl6h/KAvKXTMpqMT8NZ1liFhLTQj1ujGQlgB7Td106vz2othYGbA+oJlrI3tPAP+n96Md6Jcfkj1YEbs5yhH3nA7a3/muw1aWLAMKSmRxPzxjEfihdCg3Um2KvJln/ufebWevbj9wBdxwiQ6pMgRBGnPJazuiJp3azvEVOfqx80Z1+blLUpS/tpMHAZfJn9MY2XZstxQ3Ob+12z4L2p/TC/PNSgeC1aAKGrDCqImXkTjKGiQMYS03EUpj+yfb2YuLbIAyB189oMPdoVDh st@DESKTOP-2SU5HI0
+
+package_update: true
+package_upgrade: false
+
+write_files:
+  - path: /etc/modules-load.d/k8s.conf
+    content: |
+      overlay
+      br_netfilter
+  - path: /etc/sysctl.d/99-k8s.conf
+    content: |
+      net.ipv4.ip_forward=1
+      net.bridge.bridge-nf-call-iptables=1
+      net.bridge.bridge-nf-call-ip6tables=1
+
+runcmd:
+  # 1) swap off
+  - sed -ri 's/^\s*#?swap.*/# swap disabled for k8s/g' /etc/fstab
+  - swapoff -a
+
+  # 2) ядро + sysctl
+  - modprobe overlay
+  - modprobe br_netfilter
+  - sysctl --system
+
+  # 3) containerd
+  - apt-get update
+  - apt-get install -y ca-certificates curl gnupg lsb-release apt-transport-https
+  - install -m 0755 -d /etc/apt/keyrings
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  - chmod a+r /etc/apt/keyrings/docker.gpg
+  - echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list
+  - apt-get update
+  - apt-get install -y containerd.io
+  - bash -lc 'containerd config default > /etc/containerd/config.toml'
+  - sed -ri 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+  - systemctl enable --now containerd
+
+  # 4) Kubernetes 1.30 (first install)
+  - install -m 0755 -d /etc/apt/keyrings
+  - curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  - chmod a+r /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  - echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /" > /etc/apt/sources.list.d/kubernetes.list
+  - apt-get update
+  - apt-get install -y kubelet=1.30.* kubeadm=1.30.* kubectl=1.30.*
+  - apt-mark hold kubelet kubeadm kubectl
+  - systemctl enable kubelet
