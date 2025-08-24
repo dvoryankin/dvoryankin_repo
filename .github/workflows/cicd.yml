@@ -1,0 +1,61 @@
+name: build-and-deploy
+
+on:
+  push:
+    branches: [ main, project/managed-shop-otus ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Normalize image name (lowercase)
+        id: img
+        run: echo "name=$(echo 'ghcr.io/${{ github.repository }}/frontend' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Login to GHCR (PAT)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: dvoryankin
+          password: ${{ secrets.GHCR_PAT }}
+
+      - name: Build & Push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: project/src/frontend/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ steps.img.outputs.name }}:${{ github.sha }}
+            ${{ steps.img.outputs.name }}:latest
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.repository }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ github.ref_name == 'main' || github.ref_name == 'project/managed-shop-otus' }}
+    steps:
+      - name: Write kubeconfig
+        run: |
+          echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > kubeconfig
+          echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
+
+      - name: Compute IMAGE/TAG
+        run: |
+          echo "IMAGE=$(echo 'ghcr.io/${{ github.repository }}/frontend' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "TAG=${GITHUB_SHA}" >> $GITHUB_ENV
+
+      - name: Set image & rollout
+        run: |
+          kubectl -n default set image deploy/frontend server="${IMAGE}:${TAG}"
+          kubectl -n default rollout status deploy/frontend --timeout=180s

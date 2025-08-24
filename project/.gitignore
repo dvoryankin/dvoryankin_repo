@@ -1,0 +1,6 @@
+# kubeconfig, local env
+kubeconfig
+.env
+*.swp
+*.DS_Store
+__pycache__/

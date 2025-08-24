@@ -1,0 +1,21 @@
+grafana:
+  enabled: true
+  adminPassword: "admin123"
+  service:
+    type: ClusterIP
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+    datasources:
+      enabled: true
+
+prometheus:
+  prometheusSpec:
+    scrapeInterval: 30s
+
+alertmanager:
+  enabled: true
+
+kubeProxy:
+  enabled: false

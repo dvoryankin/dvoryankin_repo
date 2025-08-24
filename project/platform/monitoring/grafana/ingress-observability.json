@@ -1,0 +1,28 @@
+{
+  "title": "Ingress Observability (mini)",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Requests by status (5m)",
+      "targets": [
+        { "expr": "sum by (status) (count_over_time({namespace=\"ingress-nginx\", container=\"controller\"}|json| status =~ \"2..|4..|5..\" [5m]))", "datasource": "Loki" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "p95 request_time (5m)",
+      "targets": [
+        { "expr": "quantile_over_time(0.95, {namespace=\"ingress-nginx\", container=\"controller\"}|json| unwrap request_time [5m])", "datasource": "Loki" }
+      ]
+    },
+    {
+      "type": "logs",
+      "title": "Frontend errors",
+      "targets": [
+        { "expr": "{namespace=\"default\", app_kubernetes_io_name=\"frontend\"} |= \"ERROR\"", "datasource": "Loki" }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "version": 1
+}

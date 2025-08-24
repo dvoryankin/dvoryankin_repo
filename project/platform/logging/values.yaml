@@ -1,0 +1,53 @@
+loki:
+  enabled: true
+
+promtail:
+  enabled: true
+  config:
+    snippets:
+      pipelineStages:
+        - match:
+            selector: '{namespace="ingress-nginx", container="controller"}'
+            stages:
+              - json:
+                  expressions:
+                    time: time
+                    status: status
+                    method: method
+                    path: path
+                    host: host
+              - labels:
+                  status:
+                  method:
+                  path:
+                  host:
+              - timestamp:
+                  source: time
+                  format: RFC3339
+  extraScrapeConfigs:
+    - job_name: kubernetes-pods-json
+      pipeline_stages:
+        - cri: {}
+        - json:
+            expressions:
+              status: status
+              method: method
+              path: path
+              upstream_status: upstream_status
+              request_time: request_time
+        - labels:
+            status:
+            method:
+            upstream_status:
+      kubernetes_sd_configs:
+        - role: pod
+      relabel_configs:
+        - action: keep
+          source_labels: [ __meta_kubernetes_pod_label_app_kubernetes_io/name ]
+          regex: ingress-nginx
+        - action: replace
+          source_labels: [ __meta_kubernetes_pod_node_name ]
+          target_label: node
+
+datasource:
+  enabled: false

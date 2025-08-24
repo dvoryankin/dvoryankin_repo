@@ -1,0 +1,12 @@
+controller:
+  extraArgs:
+    enable-json-logging: "true"
+  publishService:
+    enabled: true
+  service:
+    type: LoadBalancer
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: observability

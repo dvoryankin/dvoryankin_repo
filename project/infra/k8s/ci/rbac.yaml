@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Namespace
+metadata: { name: cicd }
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gh-actions-deployer
+  namespace: cicd
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: deployer
+  namespace: default
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "watch", "patch", "update"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: deployer-binding
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: gh-actions-deployer
+    namespace: cicd
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: deployer
+---
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/service-account-token
+metadata:
+  name: gh-actions-deployer-token
+  namespace: cicd
+  annotations:
+    kubernetes.io/service-account.name: gh-actions-deployer

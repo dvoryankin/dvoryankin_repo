@@ -1,0 +1,28 @@
+stages: [build, deploy]
+
+variables:
+  IMAGE: "$REGISTRY/online-boutique/frontend"
+
+build:
+  stage: build
+  image: docker:24
+  services: [docker:24-dind]
+  before_script:
+    - echo "$REG_PASSWORD" | docker login "$REGISTRY" -u "$REG_USER" --password-stdin
+  script:
+    - docker build -t "$IMAGE:$CI_COMMIT_SHORT_SHA" -f ./src/frontend/Dockerfile . || echo "Note: adjust Dockerfile path if needed"
+    - docker push "$IMAGE:$CI_COMMIT_SHORT_SHA"
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+deploy:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  before_script:
+    - echo "$KUBECONFIG_B64" | base64 -d > kubeconfig
+    - export KUBECONFIG=$PWD/kubeconfig
+  script:
+    - kubectl -n default set image deploy/frontend frontend="$IMAGE:$CI_COMMIT_SHORT_SHA"
+    - kubectl -n default rollout status deploy/frontend --timeout=180s
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
