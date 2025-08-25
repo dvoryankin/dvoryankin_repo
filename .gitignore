@@ -24,4 +24,7 @@ charts/*.tgz
 .helmfile-work/
 
 vault-init.json
-*.token
+*.tokenproject/kubeconfig.ci
+project/kubeconfig.ci
+project/kubeconfig.ci.b64
+kubespray/
